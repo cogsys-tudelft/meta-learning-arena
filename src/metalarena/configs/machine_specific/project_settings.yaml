@@ -1,0 +1,25 @@
+trainer:
+  logger:
+    - class_path: autolightning.loggers.AutoWandbLogger
+      init_args:
+        project: test_wandb_lightning
+        log_model: true
+        save_dir: /Users/dmjdenblanken/Projects/meta-learning-arena-cogsys/src/metalarena/configs/speech_commands/ckpts
+  callbacks:
+    - class_path: ModelCheckpoint
+      init_args:
+        monitor: val/accuracy
+        mode: max
+        save_on_train_epoch_end: false
+        # Because there is a slash in the metric we are monitoring (https://lightning.ai/docs/pytorch/stable/api/lightning.pytorch.callbacks.ModelCheckpoint.html#lightning.pytorch.callbacks.ModelCheckpoint.params.auto_insert_metric_name)
+        auto_insert_metric_name: true
+        save_top_k: 1
+torch:
+  set_float32_matmul_precision: highest
+  set_num_threads: 16
+  backends:
+    cuda:
+      matmul:
+        allow_tf32: false
+    cudnn:
+      benchmark: true

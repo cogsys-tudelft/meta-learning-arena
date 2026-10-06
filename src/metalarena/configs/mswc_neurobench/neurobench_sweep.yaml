@@ -1,0 +1,53 @@
+name: neurobench_sweep
+method: bayes
+metric:
+  name: val/accuracy
+  goal: maximize
+early_terminate:
+  type: hyperband
+  min_iter: 3
+  eta: 3
+  strict: true
+parameters:
+  model:
+    parameters:
+      init_args:
+        parameters:
+          optimizer:
+            parameters:
+              dict_kwargs:
+                parameters:
+                  lr: {'max': 0.1, 'min': 1e-5, 'distribution': 'log_uniform_values'}
+                  weight_decay: {'max': 5e-4, 'min': 1e-6, 'distribution': 'log_uniform_values'}
+          lr_scheduler:
+            parameters:
+              dict_kwargs:
+                parameters:
+                  gamma: {'max': 1.0, 'min': 0.05, 'distribution': 'uniform'}
+                  milestones:
+                    value: [35, 40, 45, 50]
+          criterion:
+            parameters:
+              init_args:
+                parameters:
+                  label_smoothing: {'max': 0.05, 'min': 0.0, 'distribution': 'uniform'}
+          net:
+            parameters:
+              init_args:
+                parameters:
+                  module:
+                    parameters:
+                      init_args:
+                        parameters:
+                          dropout: {'max': 0.5, 'min': 0.0, 'distribution': 'uniform'}
+command:
+- autolightning
+- fit
+- -c
+- ./mswc_supervised_126k.py
+- -c
+- ../machine_specific/lug.py
+- -c
+- ../machine_specific/project_settings.yaml
+- -c
+- //wandb_sweep

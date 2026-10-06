@@ -1,0 +1,69 @@
+model:
+  class_path: autolightning.lm.ICLClassifier
+  init_args:
+    combine_batch_and_samples: true
+    merge_embedding_strategy: flatten_without_labels
+  
+    # X_train embedder for the transcribed words
+    sample_embedder:
+      class_path: autolightning.sequential
+      init_args:
+        modules:
+          - class_path: torch.nn.Embedding
+            init_args:
+              # 97 unique words + 1 for padding in the sentences of the FSC dataset
+              num_embeddings: 98
+              embedding_dim: 16 # Embedding dim does not seem to matter too much: 8/12/16/32 all give approximately the same perf
+              padding_idx: 0
+          - class_path: torch.nn.Flatten
+            init_args:
+              start_dim: 1
+          - class_path: metalarena.models.mlp_act.MLPAct # Required to match with the relu-d output from the query_sample_embedder
+            init_args:
+              in_channels: 160  # 10 tokens per transcription, each embedded to 16 dims
+              hidden_channels: [256, 256, 48]
+              # dropout: 0.2
+
+    # X_test embedder for the audio sample
+    query_sample_embedder:
+      class_path: autolightning.compile
+      init_args:
+        compiler_path: "torch.compile"
+        module:
+          class_path: tcn_lib.TCN
+          init_args:
+            # There is an issue with Chameleon if there is a 'force' downsample layer from input
+            # to first layer or when there is no downsample layer. Hence we use 31 input channels
+            # instead of 32 to avoid this issue. The first layer will downsample (but not be
+            # forced to) from 31 to 32 channels.
+            input_size: 31
+            channel_sizes: [32, 32, 48, 48, 48, 48, 48]
+            output_size: -1
+            # matches receptive field of 211627 samples (827 windows with hop size 256)
+            kernel_size: [3, 3, 3, 3, 3, 4, 5]
+            dropout: 0.125 # hparam taken from best run from sweep (foup2qby)
+            batch_norm: true
+            residual: true
+            weight_norm: false
+            force_downsample: false
+            zero_init_residual: true
+            pre_pad_with_receptive_field: true
+    net:
+      # Total of 5 classes to learn at a time
+      class_path: torchvision.ops.MLP
+      init_args:
+        in_channels: 288  # 48 + 5 * 48 concatenated sample and transcription embeddings
+        hidden_channels: [80, 64, 5]
+        # dropout: 0.2
+optimizer:
+  class_path: torch.optim.AdamW
+  init_args:
+    # hparams taken from best run from sweep (foup2qby)
+    lr: 4e-4
+    weight_decay: 1.1e-6
+seed_everything: 3407
+trainer:
+  max_steps: 180000
+  val_check_interval: 10000
+  limit_val_batches: 10000
+  limit_test_batches: 10000

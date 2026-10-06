@@ -1,0 +1,31 @@
+name: omniglot_proto_net_sweep
+method: bayes
+metric:
+  name: val/loss
+  goal: minimize
+early_terminate:
+  type: hyperband
+  min_iter: 3
+  eta: 3
+  strict: true
+parameters:
+  optimizer:
+    parameters:
+      init_args:
+        parameters:
+          # LR + WD sweep ranges updated based on best found in previous sweep
+          lr: {'max': 5e-3, 'min': 0.5e-3, 'distribution': 'log_uniform_values'}
+          weight_decay: {'max': 2e-4, 'min': 1e-8, 'distribution': 'log_uniform_values'}
+command:
+- autolightning
+- fit
+- -c
+- ./proto_net.yaml
+- -c
+- ./few_shot_data.yaml
+- -c
+- ../machine_specific/lug.py
+- -c
+- ../machine_specific/project_settings.yaml
+- -c
+- //wandb_sweep

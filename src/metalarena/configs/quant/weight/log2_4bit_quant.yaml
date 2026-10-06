@@ -1,0 +1,19 @@
+optimizer:
+  class_path: metalarena.optimizers.Madam
+  # init_args:
+    # Madam does not support weight decay
+    # weight_decay:
+model:
+  init_args:
+    weight_quant:
+      class_path: autolightning.lm.brevitas.quantizer
+      init_args:
+        class_paths: ["PoT4WeightPerTensorFixedPoint"]
+        init_args:
+          bit_width: 4
+          collect_stats_steps: 1500
+
+    support_embedding_transform:
+      class_path: brevitas_utils.custom_quantizers.pot4_weight_per_tensor_fixed_point.PotQuant32BFloorFloat
+      init_args:
+        is_input_quant_tensor: false

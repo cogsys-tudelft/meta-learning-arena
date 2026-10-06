@@ -1,0 +1,35 @@
+data:
+  class_path: metalarena.autodatasets.ZeroShotFluentSpeechCommands
+  init_args:
+    batch_transform_flattened: query
+
+    root: /space2/ddenblanken/Datasets
+    take_log: true
+
+    # random_classes_per_split: true
+
+    query_ways: 1
+    # seed: 27
+
+    non_train_iter_seed: 3407
+
+    batch_transforms:
+      after:
+        - class_path: torchaudio.transforms.MelSpectrogram
+          init_args:
+            sample_rate: 16000
+            n_mels: 31
+            win_length: 512
+            hop_length: 256
+            n_fft: 800
+    dataloaders:
+      defaults:
+        batch_size: 32
+        num_workers: 4
+        prefetch_factor: 4
+        persistent_workers: true
+        pin_memory: true
+      val:
+        batch_size: 4
+      test:
+        batch_size: 4

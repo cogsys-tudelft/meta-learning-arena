@@ -1,0 +1,92 @@
+# Python
+
+__pycache__
+
+venv
+
+*.egg-info/
+
+# macOS
+
+.DS_Store
+
+# Proprietary software
+
+qnn.py
+
+# Weights and biases
+
+wandb
+artifacts
+
+# PyTorch Lightning
+**/checkpoints/*
+**/lightning_logs/*
+
+# Datasets
+
+MNIST
+Cifar10
+omniglot-py
+data
+
+# Ignore all data* directories
+data*/
+
+# Re-include datasets directory itself
+!datasets/
+
+# Re-include all subdirectories
+!datasets/**/
+
+# Finally allow Python files
+!datasets/**/*.py
+
+# HPC
+
+job.sbatch
+
+# Trained models
+
+nets
+
+# Graphs
+
+*.dot
+*.pdf
+*.svg
+*.png
+
+# Experimental code
+
+_testing_
+
+# Copies of notebooks
+
+**copy**.ipynb
+
+# Ignore .vscode folder
+.vscode
+
+# Local configuration files
+
+local*.yaml
+
+# Pytorch Lightning
+
+config.yaml
+machine.yaml
+
+# Experimentation
+
+*.npy
+*.pt
+*.qsd.pkl
+*.pkl
+sweep_logs
+generated_configs
+
+tea_debug.log
+__*.py
+__*.ipynb
+*.txt

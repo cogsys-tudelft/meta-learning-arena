@@ -1,0 +1,34 @@
+model:
+  class_path: autolightning.lm.Prototypical
+  init_args:
+    metric: euclidean-squared
+    net:
+      class_path: autolightning.compile
+      init_args:
+        compiler_path: "torch.compile"
+        module:
+          class_path: tcn_lib.TCN
+          init_args:
+            input_size: 1
+            channel_sizes: [32, 32, 32, 48, 48, 48, 48]
+            output_size: -1
+            kernel_size: 5
+            dropout: 0.025
+            batch_norm: true
+            residual: true
+            weight_norm: false
+            zero_init_residual: false
+optimizer:
+  class_path: torch.optim.Adam
+  init_args:
+    lr: 0.001
+lr_scheduler:
+  class_path: torch.optim.lr_scheduler.StepLR
+  init_args:
+    step_size: 20000
+    gamma: 0.1
+seed_everything: 4223747124
+trainer:
+  max_steps: 60000
+  val_check_interval: 1000
+  limit_val_batches: 100

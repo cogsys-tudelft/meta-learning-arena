@@ -1,0 +1,37 @@
+[project]
+name = "meta-learning-arena"
+version = "0.3.0"
+description = "Comparison of various meta-learning algorithms"
+readme = "README.md"
+authors = [{ name = "Douwe den Blanken" }]
+keywords = ["meta-learning", "machine learning", "ml", "lstm", "rnn", "attention"]
+requires-python = ">=3.8"
+dependencies = [
+    "numpy",
+    "matplotlib",
+    "torch",
+    "torchvision",
+    "torchaudio",
+    "torchcodec",
+    "tqdm",
+    "neurobench",
+    "wandb",
+    "brevitas",
+    "torch-mate @ git+https://github.com/V0XNIHILI/torch-mate",
+    "tcn-library @ git+https://github.com/V0XNIHILI/TCN-library@main",
+    "autolightning @ git+https://github.com/V0XNIHILI/autolightning@main",
+    "brevitas-utils @ git+https://github.com/V0XNIHILI/brevitas-utils@main",
+    "AudioLoader @ git+https://github.com/KinWaiCheuk/AudioLoader@d36203bbd63234a5e72edb6a05d8240e09206eef",
+    # Need to declare mido as dependency as installing AudioLoader does not install its dependencies
+    "mido==1.2.10",
+    # jsonargparse 4.52.0 passes callable defaults (e.g. MelSpectrogram's window_fn) as strings
+    "jsonargparse<4.52",
+]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project.urls]
+"Homepage" = "https://github.com/V0XNIHILI/meta-learning-arena"
+"Bug Tracker" = "https://github.com/V0XNIHILI/meta-learning-arena/issues"

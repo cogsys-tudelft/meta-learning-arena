@@ -1,0 +1,41 @@
+name: Zero shot FSC do/lr/wd (28k MLP, 103k TCN)
+method: bayes
+metric:
+  name: val/accuracy
+  goal: maximize
+# early_terminate:
+#   type: hyperband
+#   min_iter: 7
+#   eta: 3
+#   strict: true
+parameters:
+  model:
+    parameters:
+      init_args:
+        parameters:
+          query_sample_embedder:
+            parameters:
+              init_args:
+                parameters:
+                  module:
+                    parameters:
+                      init_args:
+                        parameters:
+                          dropout: {'max': 0.25, 'min': 0.0, 'distribution': 'uniform'}
+  optimizer:
+    parameters:
+      init_args:
+        parameters:
+          lr: {'max': 1e-2, 'min': 2e-4, 'distribution': 'log_uniform_values'}
+          weight_decay: {'max': 5e-2, 'min': 1e-6, 'distribution': 'log_uniform_values'}
+command:
+- autolightning
+- fit
+- -c
+- ./zero_shot_103k_28k.yaml
+- -c
+- ../machine_specific/lug.py
+- -c
+- ../machine_specific/project_settings.yaml
+- -c
+- //wandb_sweep

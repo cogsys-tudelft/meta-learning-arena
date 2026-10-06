@@ -1,0 +1,59 @@
+# Baseline classifier for Fluent Speech Commands trained with supervised learning on the 31 intents
+model:
+  class_path: autolightning.lm.Classifier
+  init_args:
+    net:
+      class_path: autolightning.compile
+      init_args:
+        compiler_path: "torch.compile"
+        module:
+          class_path: tcn_lib.TCN
+          init_args:
+            input_size: 32
+            channel_sizes: [48, 48, 48, 48, 48, 48, 64]
+            # Total of 31 intents
+            output_size: 31
+            # With this setup, it supports maximum 827 windows (with hop size 256, from a maximum of 211627 timesteps)
+            kernel_size: [3, 3, 3, 3, 3, 4, 5]
+            dropout: 0.1
+            batch_norm: true
+            residual: true
+            weight_norm: false
+            zero_init_residual: false
+data:
+  class_path: metalarena.autodatasets.FluentSpeechCommands
+  init_args:
+    root: /space2/ddenblanken/Datasets
+    pre_load: false # pre-loading is not much faster for this dataset, but it does take time in the beginning and uses a lot of RAM
+    take_log: true
+    batch_transforms:
+      after:
+        - class_path: torchaudio.transforms.MelSpectrogram
+          init_args:
+            sample_rate: 16000
+            n_mels: 32
+            win_length: 512
+            hop_length: 256
+            n_fft: 800
+    dataloaders:
+      defaults:
+        batch_size: 256
+        num_workers: 4
+        prefetch_factor: 4
+        persistent_workers: true
+        pin_memory: true
+      train:
+        shuffle: true
+      val:
+        batch_size: 1024
+      test:
+        batch_size: 1024
+optimizer:
+  class_path: torch.optim.AdamW
+  init_args:
+    lr: 0.02
+    weight_decay: 1e-3
+seed_everything: 3407
+trainer:
+  max_steps: 14000
+  check_val_every_n_epoch: 3

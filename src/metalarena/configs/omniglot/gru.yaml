@@ -1,0 +1,11 @@
+model:
+  init_args:
+    net:
+      init_args:
+        module:
+          class_path: torch_mate.models.ClassificationGRU
+          init_args:
+            # total param count: ~116.2k (closest to 116k with hidden_size=188)
+            input_size: 1
+            hidden_size: 188
+            output_size: 48

@@ -1,0 +1,11 @@
+model:
+  init_args:
+    net:
+      init_args:
+        module:
+          class_path: torch_mate.models.ClassificationLSTM
+          init_args:
+            # total param count: 117k (vs 116k for TCN)
+            input_size: 1
+            hidden_size: 164
+            output_size: 48

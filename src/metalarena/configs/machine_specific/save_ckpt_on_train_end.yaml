@@ -1,0 +1,5 @@
+trainer:
+  callbacks:
+    - class_path: ModelCheckpoint
+      init_args:
+        save_on_train_epoch_end: true

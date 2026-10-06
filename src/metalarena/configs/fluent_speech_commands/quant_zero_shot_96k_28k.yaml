@@ -1,0 +1,162 @@
+model:
+  class_path: autolightning.lm.brevitas.BrevitasICLClassifier
+  init_args:
+    # All quantization settings
+    weight_quant:
+      class_path: autolightning.lm.brevitas.quantizer
+      init_args:
+        class_paths: ["PoT4WeightPerTensorFixedPoint"]
+        init_args:
+          bit_width: 4
+          collect_stats_steps: 450
+    act_quant:
+      class_path: autolightning.lm.brevitas.quantizer
+      init_args:
+        class_paths: ["ShiftedUint8ActPerTensorFixedPoint"]
+        init_args:
+          bit_width: 4
+          collect_stats_steps: 450
+          float_to_int_impl_type:
+            class_path: brevitas.inject.enum.FloatToIntImplType
+            init_args:
+              value: "FLOOR"
+          # Unfortunately, this ignore overflow clamp is necessary since otherwise the mapping to Chameleon
+          # results in basically random guessing
+          tensor_clamp_impl:
+            class_path: brevitas_utils.custom_clamps.ignore_overflow_clamp.IgnoreOverflowClamp
+            init_args:
+              gradient_outside_range: 1.0 # TODO: what is best here?
+    in_quant:
+      class_path: autolightning.lm.brevitas.quantizer
+      init_args:
+        class_paths: ["ShiftedUint8ActPerTensorFixedPoint"]
+        init_args:
+          bit_width: 4
+          collect_stats_steps: 450
+    bias_quant:
+      class_path: autolightning.lm.brevitas.quantizer
+      init_args:
+        class_paths: ["Int16Bias"]
+        init_args:
+          bit_width: 14
+          collect_stats_steps: 450
+          narrow_range: false
+    load_float_weights_into_model: true
+    fold_batch_norm_layers: true
+    enable_brevitas_jit: true
+    remove_dropout_layers: true
+    allow_quant_tensor_slicing: true
+    skip_modules:
+      - tcn_lib.blocks.Chomp1d
+      - tcn_lib.blocks.LastElement1d
+      - tcn_lib.blocks.PointwiseLayer
+      - tcn_lib.blocks.TemporalBlock
+      - tcn_lib.blocks.TemporalBottleneck
+      - tcn_lib.blocks.TemporalConvNet
+      - tcn_lib.blocks.TemporalLayer
+      - torch.nn.Dropout
+    calibrate: true
+    correct_biases: true
+    correct_norms: true
+    limit_calibration_batches: 150
+    shared_act_quant_mapping:
+      query_sample_embedder.2.quant_net.embedder.0.6.act_fn:
+        - sample_embedder.2.quant_net.8
+    subnet_quant_config:
+      net:
+        in_quant: null
+      query_sample_embedder.2: {}
+      sample_embedder.2: {}
+
+    # ALl ICL settings
+
+    combine_batch_and_samples: true
+    merge_embedding_strategy: flatten_without_labels
+
+    # X_train embedder for the transcribed words
+    sample_embedder:
+      class_path: autolightning.load
+      init_args:
+        file_path: /space2/ddenblanken/Experiments/meta-learning-arena/test_wandb_lightning/2byckx6k/checkpoints/epoch=0-step=180000.ckpt
+        state_dict_submodule: sample_embedder
+        module:
+          class_path: autolightning.sequential
+          init_args:
+            modules:
+              - class_path: autolightning.disable_grad
+                init_args:
+                  module:
+                    class_path: torch.nn.Embedding
+                    init_args:
+                      # 97 unique words + 1 for padding in the sentences of the FSC dataset
+                      num_embeddings: 98
+                      embedding_dim: 16
+                      padding_idx: 0 # Freeze padding embedding to not be updated during training, so the model cannot learn 'spurious' patterns from the padding token
+              - class_path: torch.nn.Flatten
+                init_args:
+                  start_dim: 1
+              - class_path: metalarena.models.mlp_act.MLPAct
+                init_args:
+                  in_channels: 160  # 10 tokens per transcription, each embedded to 16 dims
+                  hidden_channels: [256, 256, 48]
+
+    # X_test embedder for the audio sample
+    query_sample_embedder:
+      class_path: autolightning.sequential
+      init_args:
+        modules:
+          - class_path: torch.nn.ZeroPad1d
+            init_args:
+              padding: [829, 0] # Receptive field of the TCN, to ensure the output is not affected by the initial padding zeros which have a different scale than the actual input samples
+          # Add a manual scale operation to the input so make sure the first residual
+          # connection of the TCN does not lead to scaling issues when quantized
+          - class_path: torch_mate.nn.Scale
+            init_args:
+              scale: 0.3
+          - class_path: autolightning.load
+            init_args:
+              file_path: /space2/ddenblanken/Experiments/meta-learning-arena/test_wandb_lightning/2byckx6k/checkpoints/epoch=0-step=180000.ckpt
+              state_dict_submodule: query_sample_embedder._orig_mod
+              module:
+                class_path: tcn_lib.TCN
+                init_args:
+                  input_size: 31
+                  channel_sizes: [32, 32, 48, 48, 48, 48, 48]
+                  output_size: -1
+                  # RF=829 and matches receptive field of 211627 samples (827 windows with hop size 256)
+                  kernel_size: [3, 3, 3, 3, 3, 4, 5]
+                  dropout: 0.125
+                  batch_norm: true
+                  residual: true
+                  weight_norm: false
+                  zero_init_residual: false
+    net:
+      class_path: autolightning.load
+      init_args:
+        file_path: /space2/ddenblanken/Experiments/meta-learning-arena/test_wandb_lightning/2byckx6k/checkpoints/epoch=0-step=180000.ckpt
+        state_dict_submodule: net
+        module:
+          # Total of 5 classes to learn at a time
+          class_path: torchvision.ops.MLP
+          init_args:
+            in_channels: 288  # 48 + 5 * 48 concatenated sample and transcription embeddings
+            hidden_channels: [80, 64, 5]
+optimizer:
+  class_path: torch.optim.AdamW
+  init_args:
+    lr: 0.00001
+    # weight_decay: 0.000001566227428790104
+# lr_scheduler:
+#   class_path: torch.optim.lr_scheduler.MultiStepLR
+#   init_args:
+#     milestones: [1300]
+#     gamma: 0.1
+seed_everything: 3407
+trainer:
+  max_steps: 12000
+  val_check_interval: 500
+  limit_val_batches: 500
+  limit_test_batches: 2000
+  # Skip validation data sanity check to avoid crashing due to different scaling factors
+  # initially coming from the sample_embedder and the query_sample_embedder
+  # num_sanity_val_steps: 0

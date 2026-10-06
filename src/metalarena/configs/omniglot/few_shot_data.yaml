@@ -1,0 +1,38 @@
+data:
+  class_path: metalarena.autodatasets.OmniglotFewShot
+  init_args:
+    root: data/
+    download: true
+    pre_load: true
+    variant: Vinyals
+    rotations: [0, 90, 180, 270]
+
+    train_ways: 60
+    shots: 1
+    query_shots: 5
+    ways: 20
+    train_query_shots: 15
+
+    shuffle_classes: false
+    rotate_test_classes: true
+    transforms:
+      pre_load:
+        - class_path: torchvision.transforms.Resize
+          init_args:
+            size: [28, 28]
+        - class_path: torchvision.transforms.ToTensor
+        - class_path: torch.nn.Flatten
+          init_args:
+            start_dim: 1
+    dataloaders:
+      defaults:
+        persistent_workers: true
+        pin_memory: true
+      train:
+        batch_size: 1
+        num_workers: 16
+        prefetch_factor: 20
+      val:
+        batch_size: 32
+        num_workers: 4
+        prefetch_factor: 8

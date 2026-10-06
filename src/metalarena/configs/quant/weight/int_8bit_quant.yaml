@@ -1,0 +1,10 @@
+model:
+  init_args:
+    weight_quant:
+      class_path: autolightning.lm.brevitas.quantizer
+      init_args:
+        class_paths: ["Int8WeightPerTensorFixedPoint"]
+        init_args:
+          bit_width: 8
+          collect_stats_steps: 1500
+  
