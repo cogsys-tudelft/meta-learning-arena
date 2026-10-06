@@ -22,7 +22,10 @@ SPECIAL_LABELS = [NOISE_LABEL, UNKNOWN_LABEL]
 TAR_NAME = 'speech_commands_v0.02'
 FOLDER_NAME = 'SpeechCommands'
 
-TUPLE2LABEL = lambda _0, label, _2, _3, _4: label
+# Must be a named module-level function (not a lambda) so it can be pickled
+# when DataLoader workers are spawned (default start method on macOS)
+def TUPLE2LABEL(_0, label, _2, _3, _4):
+    return label
 
 
 def _calculate_balanced_data_set_size(dataset: Dataset) -> int:
