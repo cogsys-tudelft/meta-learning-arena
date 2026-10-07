@@ -21,6 +21,7 @@ dependencies = [
     "tcn-library @ git+https://github.com/V0XNIHILI/TCN-library@main",
     "autolightning @ git+https://github.com/V0XNIHILI/autolightning@main",
     "brevitas-utils @ git+https://github.com/V0XNIHILI/brevitas-utils@main",
+    "cosine-annealing-warmup @ git+https://github.com/katsura-jp/pytorch-cosine-annealing-with-warmup@12d03c07553aedd3d9e9155e2b3e31ce8c64081a",
     "AudioLoader @ git+https://github.com/KinWaiCheuk/AudioLoader@d36203bbd63234a5e72edb6a05d8240e09206eef",
     # Need to declare mido as dependency as installing AudioLoader does not install its dependencies
     "mido==1.2.10",
