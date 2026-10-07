@@ -36,4 +36,4 @@ def export_quant_state_dict(ckpt_path: str, save_path: str, as_numpy: bool=True)
         as_numpy=as_numpy
     )
 
-    save_quant_state_dict(state_dict, f"{save_path}.qsd.pkl")
+    save_quant_state_dict(state_dict, f"{save_path}")
