@@ -16,7 +16,8 @@ dependencies = [
     "tqdm",
     "neurobench",
     "wandb",
-    "brevitas",
+    # Pinning Brevitas to avoid issues with exporting the quant state dict
+    "brevitas==0.10.2",
     "torch-mate @ git+https://github.com/V0XNIHILI/torch-mate",
     "tcn-library @ git+https://github.com/V0XNIHILI/TCN-library@main",
     "autolightning @ git+https://github.com/V0XNIHILI/autolightning@main",
