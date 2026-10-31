@@ -59,8 +59,9 @@ class SpeechCommandsV2_12C(LightningAudioDataset):
                         subset='training'
                     ),
                     train=dict(subset='training'),
-                    val=dict(subset='validation'),
-                    test=dict(subset='testing')
+                    val=dict(subset='validation')
+                    # No 'test' entry: the test set is the separate 12-class test set (see setup()),
+                    # not the 'testing' subset of the full dataset (11,005 samples)
                 )
             },
             random_split=None,
@@ -79,20 +80,22 @@ class SpeechCommandsV2_12C(LightningAudioDataset):
         self.max_noise_level = max_noise_level
         self.random_val_silence_unknown_samples = random_val_silence_unknown_samples
 
-    def setup(self, stage: str):      
+    def setup(self, stage: str):
+        # Build the separate 12-class test set (4,890 samples) here, as it is not part of
+        # the dataset configuration that super().setup() builds the datasets from
+        if stage == 'test':
+            self.instantiated_dataset['test'] = SPEECHCOMMANDS_12C_TEST(self.root, download=self.download)
+
+            return
+
         super().setup(stage)
-      
+
         if stage == 'fit':
             train_set = self.get_dataset("train")
             balanced_set_count = _calculate_balanced_data_set_size(train_set)
             self._train_sampler = ImbalancedClassSampler(train_set, balanced_set_count)
 
     def get_dataset(self, phase: Phase):
-        if phase == 'test':
-            ds = SPEECHCOMMANDS_12C_TEST(self.root, download=self.download)
-
-            return ds
-
         ds = super().get_dataset(phase)
 
         # Make sure that data distribution of the validation set is the same as the test set
