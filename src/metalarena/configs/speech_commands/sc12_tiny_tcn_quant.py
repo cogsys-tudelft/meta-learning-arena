@@ -41,6 +41,8 @@ config["model"]["init_args"]["lr_scheduler"]= cc(
 config["data"]["init_args"]["transforms"] = None
 config["data"]["init_args"]["noise_p"] = 0.046980918087158735
 config["data"]["init_args"]["max_noise_level"] = 0.3173847672938177
+# The FP32 base config trains with batch size 128, but the best quantized run used 256
+config["data"]["init_args"]["dataloaders"]["defaults"]["batch_size"] = 256
 
 config["model"]["class_path"] = "autolightning.lm.brevitas.BrevitasClassifier"
 config["model"]["init_args"].update(create_quant_config(collect_stats_steps=2000, limit_calibration_batches=None))
